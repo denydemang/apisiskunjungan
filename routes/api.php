@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\KunjunganController;
+use App\Http\Controllers\LocationCheckController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\ApiAuthMiddleware;
 use App\Models\SisKunjungan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +29,19 @@ Route::controller(UserController::class)->group(function(){
     Route::post('/users/register' ,'register');
 });
 
-Route::controller(KunjunganController::class)->group(function(){
-    Route::post('/kunjungan' ,'saveKunjungan');
+Route::middleware(ApiAuthMiddleware::class)->group(function() {
+    
+    Route::controller(KunjunganController::class)->group(function(){
+        Route::post('/kunjungan' ,'saveKunjungan');
+        Route::get('/kunjungan/top' ,'topKunjungan');
+        Route::get('/kunjungan/user/{id_user?}' ,'getKunjungan');
+        Route::get('/project' ,'getProject');
+    });
+    Route::controller(LocationCheckController::class)->group(function(){
+        Route::post('/check-location' ,'check');
+    });
+    
+
+    
 });
+

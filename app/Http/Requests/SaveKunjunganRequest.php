@@ -28,6 +28,7 @@ class SaveKunjunganRequest extends FormRequest
         return [
             "user_id" => 'required',
             "project_id" => 'required',
+            "nama_knj" => 'required',
             "tgl_knj" => 'required',
             "foto_knj" => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             "lokasi_knj" => 'required',
