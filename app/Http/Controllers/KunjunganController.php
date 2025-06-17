@@ -10,6 +10,7 @@ use App\Models\SisKunjungan;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use PhpParser\Node\Expr\New_;
 use Illuminate\Support\Str;
@@ -78,6 +79,28 @@ class KunjunganController extends Controller
 
     }
 
+    public function groupKunjungan(String $userId) : JsonResponse {
+      $data = DB::table('sis_kunjungans as a')
+        ->join('users as b', 'a.user_id', '=', 'b.id')
+        ->where('user_id',$userId )
+        ->select(
+            'a.user_id',
+            'b.name',
+            'b.divisi',
+            DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) = CURDATE() THEN 1 END) as daily_visits"),
+            DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE() THEN 1 END) as weekly_visits"),
+            DB::raw("COUNT(CASE WHEN MONTH(a.tgl_knj) = MONTH(CURDATE()) AND YEAR(a.tgl_knj) = YEAR(CURDATE()) THEN 1 END) as monthly_visits")
+        )
+        ->groupBy('a.user_id', 'b.name', 'b.divisi')
+        ->orderByDesc('monthly_visits')
+        ->get()->toArray();
+        // dd($data[0]->daily_visits);
+
+        return response()->json($data);
+
+
+
+       }
     public function topKunjungan(Request $request) : KunjunganResourceCollection {
         $topUsers = SisKunjungan::select(
         'sis_kunjungans.user_id',
