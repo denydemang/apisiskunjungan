@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\ApiAuthMiddleware;
 use App\Models\SisKunjungan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +28,11 @@ Route::controller(UserController::class)->group(function(){
     Route::post('/users/login' ,'loginUser');
     Route::post('/users/logout', 'logout');
     Route::post('/users/register' ,'register');
+});
+
+Route::get('/generate', function(){
+   Artisan::call('storage:link');
+   echo 'ok';
 });
 
 Route::middleware(ApiAuthMiddleware::class)->group(function() {

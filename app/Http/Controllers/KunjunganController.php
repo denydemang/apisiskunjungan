@@ -67,6 +67,8 @@ class KunjunganController extends Controller
                     $query->whereBetween('tgl_knj', [$startdDate, $endDate]);
                 })
             ->select('sis_kunjungans.*', 'projects.nama_pro')
+            ->orderBy('tgl_knj', 'DESC')->orderBy('created_at', 'DESC')
+            ->limit(25)
             ->get()
             ->map(function ($item) {
                 $item->foto_knj = asset('storage/'. $item->foto_knj) ;
