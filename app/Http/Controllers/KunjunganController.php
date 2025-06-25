@@ -7,6 +7,7 @@ use App\Http\Resources\KunjunganResourceCollection;
 use App\Http\Resources\ProjectResourceCollection;
 use App\Models\Projects;
 use App\Models\SisKunjungan;
+use Carbon\Carbon;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,29 +56,50 @@ class KunjunganController extends Controller
 
     }
 
-    public function getKunjungan(Request $request, $iduser =null ) : KunjunganResourceCollection {
+    public function getKunjungan(Request $request) : KunjunganResourceCollection {
 
-        $startdDate = $request->get('start_date' , null);
-        $endDate = $request->get('end_date', null);
-        $data = SisKunjungan::join('projects', 'sis_kunjungans.project_id', '=', 'projects.id')
+        // $startdDate = $request->get('start_date' , null);
+        // $endDate = $request->get('end_date', null);
+        $page = $request->get('page' ,1);
+        $perpage = $request->get('perpage' ,25);
+        $iduser = $request->get('iduser' ,null);
+        $keyword =  $request->get('keyword', null);
+        $user_pmr =  $request->get('user_pmr', null);
+        $user_mgm =  $request->get('user_mgm', null);
+        $data = SisKunjungan::join('projects', 'sis_kunjungans.project_id', '=', 'projects.id')->join('users', 'sis_kunjungans.user_id' , '=', 'users.id')
             ->when($iduser !== null, function($query) use($iduser){
                     $query->where('user_id', $iduser);
                 })
-            ->when($startdDate !== null && $endDate !== null, function($query) use($startdDate, $endDate){
-                    $query->whereBetween('tgl_knj', [$startdDate, $endDate]);
+
+            ->when($user_pmr !== null, function($query) use($user_pmr){
+                    $query->where('user_pmr', $user_pmr);
                 })
-            ->select('sis_kunjungans.*', 'projects.nama_pro')
+            
+            ->when($user_mgm !== null, function($query) use($user_mgm){
+                    $query->where('user_mgm', $user_mgm);
+                })
+
+            ->when($keyword !== null , function($query) use($keyword){
+                    $query->where('nama_pro', 'like', '%' + $keyword + '%' );
+                    $query->orWhere('name' , 'like', '%' + $keyword + '%');
+                    $query->orWhere('lokasi_knj' , 'like', '%' + $keyword + '%');
+                    $query->orWhere('nama_knj' , 'like', '%' + $keyword + '%');
+                    $query->orWhere('hasil_knj' , 'like', '%' + $keyword + '%');
+                    $query->orWhere('sumber_knj' , 'like', '%' + $keyword + '%');
+                    $query->orWhere('user_knj' , 'like', '%' + $keyword + '%');
+                })
+            ->select('sis_kunjungans.*', 'projects.nama_pro' , 'users.name as user_knj' ,'users.divisi as user_divisi', 'users.jabatan as user_jabatan')
             ->orderBy('tgl_knj', 'DESC')->orderBy('created_at', 'DESC')
-            ->limit(25)
-            ->get()
-            ->map(function ($item) {
-                $item->foto_knj = asset('storage/'. $item->foto_knj) ;
-                return $item;
-            });
-        
+            ->paginate(perPage:$perpage, page:$page);
+        $dataModified= [];
+        foreach ($data as $item) {
+           
+            $item['foto_knj'] = url('/public') .'/'. $item['foto_knj'];
+            $item['jam'] = Carbon::parse(  $item['created_at'])->toTimeString();
+            $dataModified[] =$item;
+        }
 
-
-        return new KunjunganResourceCollection($data , 'Successfully Get Data Kunjungan');
+        return new KunjunganResourceCollection($dataModified , 'Successfully Get Data Kunjungan');
 
     }
 

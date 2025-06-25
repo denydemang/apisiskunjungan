@@ -32,6 +32,7 @@ class UserResource extends JsonResource
                 "email" => $this->resource->email,
                 "divisi" => $this->resource->divisi,
                 "jenis_user" => $this->resource->jenis_user,
+                "jabatan" => $this->resource->jabatan,
                 "token" =>$this->whenNotNull($this->token)
             ],
             "success" => $this->msg
