@@ -42,6 +42,7 @@ Route::middleware(ApiAuthMiddleware::class)->group(function() {
         Route::get('/kunjungan/top' ,'topKunjungan');
         Route::get('/kunjungan/group/{id}' ,'groupKunjungan');
         Route::get('/kunjungan/history' ,'getKunjungan');
+        Route::delete('/kunjungan/delete/{id}' ,'deleteKunjungan');
         Route::get('/project' ,'getProject');
     });
     Route::controller(LocationCheckController::class)->group(function(){

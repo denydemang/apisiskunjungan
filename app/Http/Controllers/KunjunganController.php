@@ -144,7 +144,27 @@ class KunjunganController extends Controller
         return new KunjunganResourceCollection( $topUsers , 'Successfully Get Data Top Kunjungan');
 
        }
+    
+    public function deleteKunjungan(Request $request , $idKunjungan) : JsonResponse {
 
+        try {
+             $dataDeleted = SisKunjungan::where("id", $idKunjungan)->delete();
+             
+        } catch (\Throwable $th) {
+             throw new HttpResponseException(response([
+                "errors" => [
+                    "general" => [
+                        $th->getMessage()
+                    ]
+                ]
+                ],500));
+        }
+       
+        return response()->json([
+            'success' => 'Succesfully Deleted Kunjungan'
+        ] , 200);
+
+    } 
     public function getProject() : ProjectResourceCollection {
 
         
