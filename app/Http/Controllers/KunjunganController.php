@@ -80,13 +80,14 @@ class KunjunganController extends Controller
                 })
 
             ->when($keyword !== null , function($query) use($keyword){
-                    $query->where('nama_pro', 'like', '%' + $keyword + '%' );
-                    $query->orWhere('name' , 'like', '%' + $keyword + '%');
-                    $query->orWhere('lokasi_knj' , 'like', '%' + $keyword + '%');
-                    $query->orWhere('nama_knj' , 'like', '%' + $keyword + '%');
-                    $query->orWhere('hasil_knj' , 'like', '%' + $keyword + '%');
-                    $query->orWhere('sumber_knj' , 'like', '%' + $keyword + '%');
-                    $query->orWhere('user_knj' , 'like', '%' + $keyword + '%');
+                    $query->where('nama_pro', 'like', '%' . $keyword . '%' );
+                    $query->orWhere('name' , 'like', '%' . $keyword . '%');
+                    $query->orWhere('lokasi_knj' , 'like', '%' . $keyword . '%');
+                    $query->orWhere('nama_knj' , 'like', '%' . $keyword . '%');
+                    $query->orWhere('hasil_knj' , 'like', '%' . $keyword . '%');
+                    $query->orWhere('sumber_knj' , 'like', '%' . $keyword . '%');
+                    $query->orWhere('kategori_knj' , 'like', '%' . $keyword . '%');
+                    $query->orWhere('divisi' , 'like', '%' . $keyword . '%');
                 })
             ->select('sis_kunjungans.*', 'projects.nama_pro' , 'users.name as user_knj' ,'users.divisi as user_divisi', 'users.jabatan as user_jabatan')
             ->orderBy('tgl_knj', 'DESC')->orderBy('created_at', 'DESC')
@@ -103,19 +104,52 @@ class KunjunganController extends Controller
 
     }
 
-    public function groupKunjungan(String $userId) : JsonResponse {
-      $data = DB::table('sis_kunjungans as a')
+    public function groupKunjungan(Request $request) : JsonResponse {
+      $user_pmr =  $request->get('user_pmr', null);
+      $user_mgm =  $request->get('user_mgm', null);
+      $userId =  $request->get('user_id', null);
+
+       $data = DB::table('sis_kunjungans as a')
         ->join('users as b', 'a.user_id', '=', 'b.id')
-        ->where('user_id',$userId )
-        ->select(
-            'a.user_id',
-            'b.name',
-            'b.divisi',
-            DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) = CURDATE() THEN 1 END) as daily_visits"),
-            DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE() THEN 1 END) as weekly_visits"),
-            DB::raw("COUNT(CASE WHEN MONTH(a.tgl_knj) = MONTH(CURDATE()) AND YEAR(a.tgl_knj) = YEAR(CURDATE()) THEN 1 END) as monthly_visits")
-        )
-        ->groupBy('a.user_id', 'b.name', 'b.divisi')
+        ->join('projects', 'a.project_id', '=', 'projects.id')
+
+        ->when($user_pmr !== null, function($query) use($user_pmr){
+                $query->where('projects.user_pmr', $user_pmr);
+                $query->select(
+                    'projects.user_pmr',
+                    DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) = CURDATE() THEN 1 END) as daily_visits"),
+                    DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE() THEN 1 END) as weekly_visits"),
+                    DB::raw("COUNT(CASE WHEN MONTH(a.tgl_knj) = MONTH(CURDATE()) AND YEAR(a.tgl_knj) = YEAR(CURDATE()) THEN 1 END) as monthly_visits")
+                );
+            $query->groupBy('projects.user_pmr');
+           
+        })
+        
+        ->when($user_mgm !== null, function($query) use($user_mgm){
+                $query->where('projects.user_mgm', $user_mgm);
+                $query->select(
+                    'projects.user_mgm',
+                    DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) = CURDATE() THEN 1 END) as daily_visits"),
+                    DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE() THEN 1 END) as weekly_visits"),
+                    DB::raw("COUNT(CASE WHEN MONTH(a.tgl_knj) = MONTH(CURDATE()) AND YEAR(a.tgl_knj) = YEAR(CURDATE()) THEN 1 END) as monthly_visits")
+                );
+                $query->groupBy('projects.user_mgm');
+              
+            })
+        ->when($userId !== null, function($query) use($userId){
+                $query->where('a.user_id', $userId);
+                $query->select(
+                'a.user_id',
+                'b.name',
+                'b.divisi',
+                DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) = CURDATE() THEN 1 END) as daily_visits"),
+                DB::raw("COUNT(CASE WHEN DATE(a.tgl_knj) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE() THEN 1 END) as weekly_visits"),
+                DB::raw("COUNT(CASE WHEN MONTH(a.tgl_knj) = MONTH(CURDATE()) AND YEAR(a.tgl_knj) = YEAR(CURDATE()) THEN 1 END) as monthly_visits")
+                    );
+                $query->groupBy('a.user_id', 'b.name', 'b.divisi');
+                
+            })
+    
         ->orderByDesc('monthly_visits')
         ->get()->toArray();
         // dd($data[0]->daily_visits);

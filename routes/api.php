@@ -40,7 +40,7 @@ Route::middleware(ApiAuthMiddleware::class)->group(function() {
     Route::controller(KunjunganController::class)->group(function(){
         Route::post('/kunjungan' ,'saveKunjungan');
         Route::get('/kunjungan/top' ,'topKunjungan');
-        Route::get('/kunjungan/group/{id}' ,'groupKunjungan');
+        Route::get('/kunjungan/group' ,'groupKunjungan');
         Route::get('/kunjungan/history' ,'getKunjungan');
         Route::delete('/kunjungan/delete/{id}' ,'deleteKunjungan');
         Route::get('/project' ,'getProject');
